@@ -208,6 +208,9 @@ Testing utilities for proofs:
 - `export_solidity_verifier()` - Export Solidity verifier
 - `get_calldata(inputs)` - Get calldata for on-chain verification
 
+## Acknowledgement
+https://github.com/erhant/circomkit
+
 ## License
 
 MIT
