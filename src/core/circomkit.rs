@@ -163,9 +163,9 @@ impl Circomkit {
                 circuit.public.join(", ")
             )
         };
-
+        // circom 2.1.9
         let content = format!(
-            r#"pragma circom 2.0.0;
+            r#"pragma circom 2.1.9;
 
 include "../{}";
 
