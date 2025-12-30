@@ -24,7 +24,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-circomkit = { git = "https://github.com/example/circomkit-rs" }
+circomkit = { git = "https://github.com/RajeshRk18/circomkit-rs" }
 ```
 
 ## Quick Start
