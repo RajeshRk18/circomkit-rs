@@ -1,10 +1,10 @@
-//! # Circomkit-RS
+//! # Circomkit-rs
 //!
 //! A Rust library for Circom circuit testing and development.
 //!
 //! ## Overview
 //!
-//! Circomkit-RS provides a comprehensive toolkit for working with Circom circuits:
+//! Circomkit-rs provides a comprehensive toolkit for working with Circom circuits:
 //!
 //! - **Circuit Configuration**: Manage circuit parameters and build settings
 //! - **Witness Generation**: Generate and test circuit witnesses
@@ -40,6 +40,9 @@ pub mod error;
 pub mod testers;
 pub mod types;
 pub mod utils;
+
+#[cfg(test)]
+mod tests;
 
 // Re-exports for convenience
 pub use core::{Circomkit, CircomkitConfig};

@@ -1,2 +1,6 @@
 **/Cargo.lock
 target
+test_build
+test_circuits
+node_modules
+pnpm*

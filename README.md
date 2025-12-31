@@ -1,10 +1,10 @@
-# Circomkit-RS
+# Circomkit-rs
 
 A Rust library for Circom circuit testing and development.
 
 ## Overview
 
-Circomkit-RS provides a comprehensive toolkit for working with Circom circuits in Rust:
+Circomkit-rs provides a comprehensive toolkit for working with Circom circuits in Rust:
 
 - **Circuit Configuration**: Manage circuit parameters and build settings
 - **Witness Generation**: Generate and test circuit witnesses  
@@ -13,9 +13,9 @@ Circomkit-RS provides a comprehensive toolkit for working with Circom circuits i
 
 ## Prerequisites
 
-- [Rust](https://rustup.rs/) (1.70+)
+- [Rust](https://rustup.rs/)
 - [Circom](https://docs.circom.io/getting-started/installation/) (2.0+)
-- [SnarkJS](https://github.com/iden3/snarkjs) (0.7+)
+- [SnarkJS](https://github.com/iden3/snarkjs)
 - Node.js (for witness generation)
 
 ## Installation
@@ -24,7 +24,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-circomkit = { git = "https://github.com/RajeshRk18/circomkit-rs" }
+circomkit = { git = "https://github.com/RajeshRk18/Circomkit-rs" }
 ```
 
 ## Quick Start

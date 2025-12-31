@@ -1,4 +1,4 @@
-//! Type definitions for Circomkit-RS
+//! Type definitions for Circomkit-rs
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

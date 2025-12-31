@@ -1,4 +1,4 @@
-//! Error types for Circomkit-RS
+//! Error types for Circomkit-rs
 
 use std::path::PathBuf;
 use thiserror::Error;
