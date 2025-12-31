@@ -52,7 +52,10 @@ impl WitnessTester {
     pub async fn expect_pass(&mut self, inputs: CircuitSignals) -> Result<CircuitSignals> {
         self.ensure_compiled().await?;
 
-        let witness = self.circomkit.generate_witness(&self.circuit, &inputs).await?;
+        let witness = self
+            .circomkit
+            .generate_witness(&self.circuit, &inputs)
+            .await?;
 
         // Read the output signals from the witness
         let outputs = self.read_witness_outputs(&witness.path).await?;
@@ -64,7 +67,10 @@ impl WitnessTester {
     pub async fn expect_fail(&mut self, inputs: CircuitSignals) -> Result<()> {
         self.ensure_compiled().await?;
 
-        let result = self.circomkit.generate_witness(&self.circuit, &inputs).await;
+        let result = self
+            .circomkit
+            .generate_witness(&self.circuit, &inputs)
+            .await;
 
         match result {
             Ok(_) => Err(CircomkitError::Other(
@@ -82,7 +88,10 @@ impl WitnessTester {
     ) -> Result<WitnessTestResult> {
         self.ensure_compiled().await?;
 
-        let witness = self.circomkit.generate_witness(&self.circuit, &inputs).await?;
+        let witness = self
+            .circomkit
+            .generate_witness(&self.circuit, &inputs)
+            .await?;
         let outputs = self.read_witness_outputs(&witness.path).await?;
 
         // Compare outputs with expected
@@ -158,7 +167,7 @@ impl WitnessTester {
             .arg(witness_path)
             .arg(&output_path)
             .output()
-            .map_err(|e| CircomkitError::Io(e))?;
+            .map_err(CircomkitError::Io)?;
 
         if !output.status.success() {
             // If export fails, return empty map (some versions don't support this)
@@ -237,8 +246,14 @@ mod tests {
             compiled: false,
         };
 
-        assert!(tester.compare_signals(&SignalValue::Single("42".into()), &SignalValue::Number(42)));
-        assert!(tester.compare_signals(&SignalValue::Number(42), &SignalValue::Single("42".into())));
-        assert!(!tester.compare_signals(&SignalValue::Single("42".into()), &SignalValue::Number(43)));
+        assert!(
+            tester.compare_signals(&SignalValue::Single("42".into()), &SignalValue::Number(42))
+        );
+        assert!(
+            tester.compare_signals(&SignalValue::Number(42), &SignalValue::Single("42".into()))
+        );
+        assert!(
+            !tester.compare_signals(&SignalValue::Single("42".into()), &SignalValue::Number(43))
+        );
     }
 }

@@ -145,7 +145,11 @@ impl ProofTester {
     }
 
     /// Verify an existing proof
-    pub async fn verify_proof(&mut self, proof: &Proof, public_signals: &PublicSignals) -> Result<bool> {
+    pub async fn verify_proof(
+        &mut self,
+        proof: &Proof,
+        public_signals: &PublicSignals,
+    ) -> Result<bool> {
         self.ensure_setup().await?;
         self.circomkit
             .verify(&self.circuit, proof, public_signals)
@@ -159,10 +163,7 @@ impl ProofTester {
     }
 
     /// Get the calldata for verifying a proof on-chain
-    pub async fn get_calldata(
-        &mut self,
-        inputs: CircuitSignals,
-    ) -> Result<String> {
+    pub async fn get_calldata(&mut self, inputs: CircuitSignals) -> Result<String> {
         self.ensure_setup().await?;
 
         let (proof, public_signals) = self.circomkit.prove(&self.circuit, &inputs).await?;
@@ -186,7 +187,7 @@ impl ProofTester {
             .arg(&public_path)
             .arg(&proof_path)
             .output()
-            .map_err(|e| CircomkitError::Io(e))?;
+            .map_err(CircomkitError::Io)?;
 
         // Clean up temp files
         let _ = tokio::fs::remove_file(&proof_path).await;

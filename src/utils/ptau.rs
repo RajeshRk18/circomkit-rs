@@ -24,7 +24,7 @@ const HERMEZ_PTAU_BASE: &str = "https://storage.googleapis.com/zkevm/ptau";
 pub fn get_recommended_ptau(num_constraints: usize) -> PtauInfo {
     // Calculate minimum power needed
     let power = (num_constraints as f64).log2().ceil() as u8;
-    let power = power.max(8).min(28); // Clamp between 8 and 28
+    let power = power.max(8).min(28);
 
     let filename = format!("powersOfTau28_hez_final_{:02}.ptau", power);
     let url = format!("{}/{}", HERMEZ_PTAU_BASE, filename);
@@ -91,7 +91,7 @@ pub async fn download_ptau(info: &PtauInfo, output_dir: &Path) -> Result<PathBuf
             .arg("--show-progress")
             .arg(&info.url)
             .output()
-            .map_err(|e| CircomkitError::Io(e))?;
+            .map_err(CircomkitError::Io)?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);

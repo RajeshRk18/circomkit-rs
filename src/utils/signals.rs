@@ -1,34 +1,30 @@
 //! Signal creation utilities
 
 use crate::types::{CircuitSignals, SignalValue};
-use std::collections::HashMap;
 
 /// Create a circuit signals map from key-value pairs
-/// 
+///
 /// # Example
-/// 
+///
 /// ```
 /// use circomkit::utils::signals;
-/// 
+///
 /// let inputs = signals([
 ///     ("a", 3.into()),
 ///     ("b", 5.into()),
 /// ]);
 /// ```
 pub fn signals<const N: usize>(pairs: [(&str, SignalValue); N]) -> CircuitSignals {
-    pairs
-        .into_iter()
-        .map(|(k, v)| (k.to_string(), v))
-        .collect()
+    pairs.into_iter().map(|(k, v)| (k.to_string(), v)).collect()
 }
 
 /// Create a signal array from a slice of values
-/// 
+///
 /// # Example
-/// 
+///
 /// ```
 /// use circomkit::utils::signal_array;
-/// 
+///
 /// let arr = signal_array(&[1, 2, 3, 4, 5]);
 /// ```
 pub fn signal_array<T: ToString>(values: &[T]) -> SignalValue {
@@ -90,12 +86,12 @@ impl SignalBuilder {
 }
 
 /// Macro for creating circuit signals
-/// 
+///
 /// # Example
-/// 
+///
 /// ```ignore
 /// use circomkit::signals;
-/// 
+///
 /// let inputs = signals! {
 ///     "a" => 3,
 ///     "b" => 5,

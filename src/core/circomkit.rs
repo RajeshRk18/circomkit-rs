@@ -91,17 +91,11 @@ impl Circomkit {
             .arg(&build_dir)
             .arg("-p")
             .arg(self.config.prime.to_string())
-            .arg(format!("-O{}", self.config.optimization));
+            .arg(format!("--O{}", self.config.optimization));
 
         // Add include paths
         for include in &self.config.include {
             cmd.arg("-l").arg(include);
-        }
-
-        // Add node_modules as default include
-        let node_modules = PathBuf::from("node_modules");
-        if node_modules.exists() {
-            cmd.arg("-l").arg(&node_modules);
         }
 
         debug!("Running: {:?}", cmd);
@@ -158,10 +152,7 @@ impl Circomkit {
         let public_signals = if circuit.public.is_empty() {
             String::new()
         } else {
-            format!(
-                " {{public [{}]}}",
-                circuit.public.join(", ")
-            )
+            format!(" {{public [{}]}}", circuit.public.join(", "))
         };
         // circom 2.1.9
         let content = format!(
@@ -228,7 +219,11 @@ component main{} = {}({});
     }
 
     /// Set up the proving and verification keys
-    pub async fn setup(&self, circuit: &CircuitConfig, ptau_path: &Path) -> Result<CircuitArtifacts> {
+    pub async fn setup(
+        &self,
+        circuit: &CircuitConfig,
+        ptau_path: &Path,
+    ) -> Result<CircuitArtifacts> {
         info!("Setting up keys for: {}", circuit.name);
 
         let build_dir = self.config.build_path(&circuit.name);
@@ -492,7 +487,7 @@ component main{} = {}({});
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
-        
+
         // Parse the output (snarkjs outputs human-readable format)
         // This is a simplified parser
         let mut info = CircuitInfo {

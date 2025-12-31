@@ -214,7 +214,9 @@ impl CircomkitConfig {
 
     /// Get the path to an input file
     pub fn input_path(&self, circuit: &str, input: &str) -> PathBuf {
-        self.dir_inputs.join(circuit).join(format!("{}.json", input))
+        self.dir_inputs
+            .join(circuit)
+            .join(format!("{}.json", input))
     }
 
     /// Get the build directory for a circuit
@@ -282,17 +284,17 @@ mod tests {
     #[test]
     fn test_config_paths() {
         let config = CircomkitConfig::new();
-        
+
         assert_eq!(
             config.circuit_path("multiplier.circom"),
             PathBuf::from("circuits/multiplier.circom")
         );
-        
+
         assert_eq!(
             config.input_path("multiplier", "default"),
             PathBuf::from("inputs/multiplier/default.json")
         );
-        
+
         assert_eq!(
             config.build_path("multiplier"),
             PathBuf::from("build/multiplier")
