@@ -1,6 +1,7 @@
 mod circuits;
 mod testing;
 
+use crate::utils::eddsa::{private_key_from_seed, sign_poseidon};
 use testing::{CircuitTester, inputs};
 
 #[test]
@@ -139,7 +140,9 @@ fn test_mock_range_check_8bit() {
         vec![8],
         inputs(&[("in", vec!["255"])]),
     );
-    assert!(r1.is_ok());
+    if let Err(e) = &r1 {
+        panic!("Range check 8-bit test failed: {}", e);
+    }
 
     // 256 does NOT fit in 8 bits
     let r2 = tester.test_circuit_fails(
@@ -148,7 +151,9 @@ fn test_mock_range_check_8bit() {
         vec![8],
         inputs(&[("in", vec!["256"])]),
     );
-    assert!(r2.is_ok());
+    if let Err(e) = &r2 {
+        panic!("Range check 8-bit overflow test failed: {}", e);
+    }
 }
 
 #[test]
@@ -162,5 +167,104 @@ fn test_mock_range_check_64bit() {
         vec![],
         inputs(&[("in", vec![max_u64])]),
     );
-    assert!(result.is_ok());
+    if let Err(e) = &result {
+        panic!("Range check 64-bit test failed: {}", e);
+    }
+}
+
+/// Test seed for deterministic EdDSA key generation
+/// Same as the seed used in circomlibjs tests: 0x0001020304050607080900010203040506070809000102030405060708090001
+const EDDSA_TEST_SEED: [u8; 32] = [
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+    0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01,
+];
+
+#[test]
+fn test_eddsa_poseidon_verifier() {
+    let tester = CircuitTester::new();
+
+    // Generate EdDSA Poseidon signature using native Rust implementation
+    let private_key = private_key_from_seed(&EDDSA_TEST_SEED);
+    let sig = sign_poseidon(&private_key, 1234);
+
+    let result = tester.test_circuit(
+        "EdDSAVerifier",
+        circuits::EDDSA_POSEIDON_VERIFIER,
+        vec![],
+        inputs(&[
+            ("enabled", vec![sig.enabled.as_str()]),
+            ("Ax", vec![sig.ax.as_str()]),
+            ("Ay", vec![sig.ay.as_str()]),
+            ("R8x", vec![sig.r8x.as_str()]),
+            ("R8y", vec![sig.r8y.as_str()]),
+            ("S", vec![sig.s.as_str()]),
+            ("M", vec![sig.m.as_str()]),
+        ]),
+    );
+    if let Err(e) = &result {
+        panic!("EdDSA verifier test failed: {}", e);
+    }
+}
+
+#[test]
+fn test_eddsa_poseidon_verifier_invalid_signature() {
+    let tester = CircuitTester::new();
+
+    // Generate valid signature then modify R8x to make it invalid
+    let private_key = private_key_from_seed(&EDDSA_TEST_SEED);
+    let sig = sign_poseidon(&private_key, 1234);
+
+    // Parse R8x, add 1, and convert back to string to create invalid signature
+    let r8x_invalid: num_bigint::BigInt = sig.r8x.parse().unwrap();
+    let r8x_modified = (r8x_invalid + 1i32).to_string();
+
+    let result = tester.test_circuit_fails(
+        "EdDSAVerifier",
+        circuits::EDDSA_POSEIDON_VERIFIER,
+        vec![],
+        inputs(&[
+            ("enabled", vec!["1"]),
+            ("Ax", vec![sig.ax.as_str()]),
+            ("Ay", vec![sig.ay.as_str()]),
+            ("R8x", vec![r8x_modified.as_str()]),
+            ("R8y", vec![sig.r8y.as_str()]),
+            ("S", vec![sig.s.as_str()]),
+            ("M", vec![sig.m.as_str()]),
+        ]),
+    );
+    if let Err(e) = &result {
+        panic!("EdDSA invalid signature test failed: {}", e);
+    }
+}
+
+#[test]
+fn test_eddsa_poseidon_verifier_disabled() {
+    let tester = CircuitTester::new();
+
+    // Generate valid signature then modify R8x to make it invalid
+    let private_key = private_key_from_seed(&EDDSA_TEST_SEED);
+    let sig = sign_poseidon(&private_key, 1234);
+
+    // Parse R8x, add 1 to create invalid signature
+    let r8x_invalid: num_bigint::BigInt = sig.r8x.parse().unwrap();
+    let r8x_modified = (r8x_invalid + 1i32).to_string();
+
+    // Disabled verification - bad signature should pass when enabled=0
+    let result = tester.test_circuit(
+        "EdDSAVerifier",
+        circuits::EDDSA_POSEIDON_VERIFIER,
+        vec![],
+        inputs(&[
+            ("enabled", vec!["0"]),
+            ("Ax", vec![sig.ax.as_str()]),
+            ("Ay", vec![sig.ay.as_str()]),
+            ("R8x", vec![r8x_modified.as_str()]),
+            ("R8y", vec![sig.r8y.as_str()]),
+            ("S", vec![sig.s.as_str()]),
+            ("M", vec![sig.m.as_str()]),
+        ]),
+    );
+    if let Err(e) = &result {
+        panic!("EdDSA disabled test failed: {}", e);
+    }
 }
