@@ -1,6 +1,7 @@
 mod circuits;
 mod testing;
 
+use crate::utils::eddsa::{private_key_from_seed, sign_poseidon};
 use testing::{CircuitTester, inputs};
 
 #[test]
@@ -165,24 +166,33 @@ fn test_mock_range_check_64bit() {
     assert!(result.is_ok());
 }
 
+/// Test seed for deterministic EdDSA key generation
+/// Same as the seed used in circomlibjs tests: 0x0001020304050607080900010203040506070809000102030405060708090001
+const EDDSA_TEST_SEED: [u8; 32] = [
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+    0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01,
+];
+
 #[test]
 fn test_eddsa_poseidon_verifier() {
     let tester = CircuitTester::new();
 
-    // Valid EdDSA Poseidon signature test vectors
-    // Generated using circomlibjs with message=1234 and a known private key
+    // Generate EdDSA Poseidon signature using native Rust implementation
+    let private_key = private_key_from_seed(&EDDSA_TEST_SEED);
+    let sig = sign_poseidon(&private_key, 1234);
+
     let result = tester.test_circuit(
         "EdDSAVerifier",
         circuits::EDDSA_POSEIDON_VERIFIER,
         vec![],
         inputs(&[
-            ("enabled", vec!["1"]),
-            ("Ax", vec!["13277427435165878497778222415993513565335242147425444199013288855685581939618"]),
-            ("Ay", vec!["13622229784656158136036771217484571176836296686641868549125388198837476602820"]),
-            ("R8x", vec!["11220723668893468001994760120794694848178115379170651044669708829805665054484"]),
-            ("R8y", vec!["2367470421002446880004241260470975644531657398480773647535134774673409612366"]),
-            ("S", vec!["2010143491207902444122668013146870263468969134090678646686512037244361350365"]),
-            ("M", vec!["1234"]),
+            ("enabled", vec![sig.enabled.as_str()]),
+            ("Ax", vec![sig.ax.as_str()]),
+            ("Ay", vec![sig.ay.as_str()]),
+            ("R8x", vec![sig.r8x.as_str()]),
+            ("R8y", vec![sig.r8y.as_str()]),
+            ("S", vec![sig.s.as_str()]),
+            ("M", vec![sig.m.as_str()]),
         ]),
     );
     assert!(result.is_ok());
@@ -192,20 +202,26 @@ fn test_eddsa_poseidon_verifier() {
 fn test_eddsa_poseidon_verifier_invalid_signature() {
     let tester = CircuitTester::new();
 
-    // Invalid signature - modified R8x value (added 1)
-    // Should fail constraint verification
+    // Generate valid signature then modify R8x to make it invalid
+    let private_key = private_key_from_seed(&EDDSA_TEST_SEED);
+    let sig = sign_poseidon(&private_key, 1234);
+
+    // Parse R8x, add 1, and convert back to string to create invalid signature
+    let r8x_invalid: num_bigint::BigInt = sig.r8x.parse().unwrap();
+    let r8x_modified = (r8x_invalid + 1i32).to_string();
+
     let result = tester.test_circuit_fails(
         "EdDSAVerifier",
         circuits::EDDSA_POSEIDON_VERIFIER,
         vec![],
         inputs(&[
             ("enabled", vec!["1"]),
-            ("Ax", vec!["13277427435165878497778222415993513565335242147425444199013288855685581939618"]),
-            ("Ay", vec!["13622229784656158136036771217484571176836296686641868549125388198837476602820"]),
-            ("R8x", vec!["11220723668893468001994760120794694848178115379170651044669708829805665054485"]), // modified +1
-            ("R8y", vec!["2367470421002446880004241260470975644531657398480773647535134774673409612366"]),
-            ("S", vec!["2010143491207902444122668013146870263468969134090678646686512037244361350365"]),
-            ("M", vec!["1234"]),
+            ("Ax", vec![sig.ax.as_str()]),
+            ("Ay", vec![sig.ay.as_str()]),
+            ("R8x", vec![r8x_modified.as_str()]),
+            ("R8y", vec![sig.r8y.as_str()]),
+            ("S", vec![sig.s.as_str()]),
+            ("M", vec![sig.m.as_str()]),
         ]),
     );
     assert!(result.is_ok());
@@ -215,6 +231,14 @@ fn test_eddsa_poseidon_verifier_invalid_signature() {
 fn test_eddsa_poseidon_verifier_disabled() {
     let tester = CircuitTester::new();
 
+    // Generate valid signature then modify R8x to make it invalid
+    let private_key = private_key_from_seed(&EDDSA_TEST_SEED);
+    let sig = sign_poseidon(&private_key, 1234);
+
+    // Parse R8x, add 1 to create invalid signature
+    let r8x_invalid: num_bigint::BigInt = sig.r8x.parse().unwrap();
+    let r8x_modified = (r8x_invalid + 1i32).to_string();
+
     // Disabled verification - bad signature should pass when enabled=0
     let result = tester.test_circuit(
         "EdDSAVerifier",
@@ -222,12 +246,12 @@ fn test_eddsa_poseidon_verifier_disabled() {
         vec![],
         inputs(&[
             ("enabled", vec!["0"]),
-            ("Ax", vec!["13277427435165878497778222415993513565335242147425444199013288855685581939618"]),
-            ("Ay", vec!["13622229784656158136036771217484571176836296686641868549125388198837476602820"]),
-            ("R8x", vec!["11220723668893468001994760120794694848178115379170651044669708829805665054485"]), // modified +1 (invalid)
-            ("R8y", vec!["2367470421002446880004241260470975644531657398480773647535134774673409612366"]),
-            ("S", vec!["2010143491207902444122668013146870263468969134090678646686512037244361350365"]),
-            ("M", vec!["1234"]),
+            ("Ax", vec![sig.ax.as_str()]),
+            ("Ay", vec![sig.ay.as_str()]),
+            ("R8x", vec![r8x_modified.as_str()]),
+            ("R8y", vec![sig.r8y.as_str()]),
+            ("S", vec![sig.s.as_str()]),
+            ("M", vec![sig.m.as_str()]),
         ]),
     );
     assert!(result.is_ok());
