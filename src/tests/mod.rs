@@ -140,7 +140,9 @@ fn test_mock_range_check_8bit() {
         vec![8],
         inputs(&[("in", vec!["255"])]),
     );
-    assert!(r1.is_ok());
+    if let Err(e) = &r1 {
+        panic!("Range check 8-bit test failed: {}", e);
+    }
 
     // 256 does NOT fit in 8 bits
     let r2 = tester.test_circuit_fails(
@@ -149,7 +151,9 @@ fn test_mock_range_check_8bit() {
         vec![8],
         inputs(&[("in", vec!["256"])]),
     );
-    assert!(r2.is_ok());
+    if let Err(e) = &r2 {
+        panic!("Range check 8-bit overflow test failed: {}", e);
+    }
 }
 
 #[test]
@@ -163,7 +167,9 @@ fn test_mock_range_check_64bit() {
         vec![],
         inputs(&[("in", vec![max_u64])]),
     );
-    assert!(result.is_ok());
+    if let Err(e) = &result {
+        panic!("Range check 64-bit test failed: {}", e);
+    }
 }
 
 /// Test seed for deterministic EdDSA key generation
@@ -195,7 +201,9 @@ fn test_eddsa_poseidon_verifier() {
             ("M", vec![sig.m.as_str()]),
         ]),
     );
-    assert!(result.is_ok(), "EdDSA verifier test failed: {:?}", result.err());
+    if let Err(e) = &result {
+        panic!("EdDSA verifier test failed: {}", e);
+    }
 }
 
 #[test]
@@ -224,7 +232,9 @@ fn test_eddsa_poseidon_verifier_invalid_signature() {
             ("M", vec![sig.m.as_str()]),
         ]),
     );
-    assert!(result.is_ok(), "EdDSA invalid signature test failed: {:?}", result.err());
+    if let Err(e) = &result {
+        panic!("EdDSA invalid signature test failed: {}", e);
+    }
 }
 
 #[test]
@@ -254,5 +264,7 @@ fn test_eddsa_poseidon_verifier_disabled() {
             ("M", vec![sig.m.as_str()]),
         ]),
     );
-    assert!(result.is_ok(), "EdDSA disabled test failed: {:?}", result.err());
+    if let Err(e) = &result {
+        panic!("EdDSA disabled test failed: {}", e);
+    }
 }
