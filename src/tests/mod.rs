@@ -195,7 +195,7 @@ fn test_eddsa_poseidon_verifier() {
             ("M", vec![sig.m.as_str()]),
         ]),
     );
-    assert!(result.is_ok());
+    assert!(result.is_ok(), "EdDSA verifier test failed: {:?}", result.err());
 }
 
 #[test]
@@ -224,7 +224,7 @@ fn test_eddsa_poseidon_verifier_invalid_signature() {
             ("M", vec![sig.m.as_str()]),
         ]),
     );
-    assert!(result.is_ok());
+    assert!(result.is_ok(), "EdDSA invalid signature test failed: {:?}", result.err());
 }
 
 #[test]
@@ -254,5 +254,5 @@ fn test_eddsa_poseidon_verifier_disabled() {
             ("M", vec![sig.m.as_str()]),
         ]),
     );
-    assert!(result.is_ok());
+    assert!(result.is_ok(), "EdDSA disabled test failed: {:?}", result.err());
 }
