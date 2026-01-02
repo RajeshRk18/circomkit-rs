@@ -164,3 +164,71 @@ fn test_mock_range_check_64bit() {
     );
     assert!(result.is_ok());
 }
+
+#[test]
+fn test_eddsa_poseidon_verifier() {
+    let tester = CircuitTester::new();
+
+    // Valid EdDSA Poseidon signature test vectors
+    // Generated using circomlibjs with message=1234 and a known private key
+    let result = tester.test_circuit(
+        "EdDSAVerifier",
+        circuits::EDDSA_POSEIDON_VERIFIER,
+        vec![],
+        inputs(&[
+            ("enabled", vec!["1"]),
+            ("Ax", vec!["13277427435165878497778222415993513565335242147425444199013288855685581939618"]),
+            ("Ay", vec!["13622229784656158136036771217484571176836296686641868549125388198837476602820"]),
+            ("R8x", vec!["11220723668893468001994760120794694848178115379170651044669708829805665054484"]),
+            ("R8y", vec!["2367470421002446880004241260470975644531657398480773647535134774673409612366"]),
+            ("S", vec!["2010143491207902444122668013146870263468969134090678646686512037244361350365"]),
+            ("M", vec!["1234"]),
+        ]),
+    );
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_eddsa_poseidon_verifier_invalid_signature() {
+    let tester = CircuitTester::new();
+
+    // Invalid signature - modified R8x value (added 1)
+    // Should fail constraint verification
+    let result = tester.test_circuit_fails(
+        "EdDSAVerifier",
+        circuits::EDDSA_POSEIDON_VERIFIER,
+        vec![],
+        inputs(&[
+            ("enabled", vec!["1"]),
+            ("Ax", vec!["13277427435165878497778222415993513565335242147425444199013288855685581939618"]),
+            ("Ay", vec!["13622229784656158136036771217484571176836296686641868549125388198837476602820"]),
+            ("R8x", vec!["11220723668893468001994760120794694848178115379170651044669708829805665054485"]), // modified +1
+            ("R8y", vec!["2367470421002446880004241260470975644531657398480773647535134774673409612366"]),
+            ("S", vec!["2010143491207902444122668013146870263468969134090678646686512037244361350365"]),
+            ("M", vec!["1234"]),
+        ]),
+    );
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_eddsa_poseidon_verifier_disabled() {
+    let tester = CircuitTester::new();
+
+    // Disabled verification - bad signature should pass when enabled=0
+    let result = tester.test_circuit(
+        "EdDSAVerifier",
+        circuits::EDDSA_POSEIDON_VERIFIER,
+        vec![],
+        inputs(&[
+            ("enabled", vec!["0"]),
+            ("Ax", vec!["13277427435165878497778222415993513565335242147425444199013288855685581939618"]),
+            ("Ay", vec!["13622229784656158136036771217484571176836296686641868549125388198837476602820"]),
+            ("R8x", vec!["11220723668893468001994760120794694848178115379170651044669708829805665054485"]), // modified +1 (invalid)
+            ("R8y", vec!["2367470421002446880004241260470975644531657398480773647535134774673409612366"]),
+            ("S", vec!["2010143491207902444122668013146870263468969134090678646686512037244361350365"]),
+            ("M", vec!["1234"]),
+        ]),
+    );
+    assert!(result.is_ok());
+}
