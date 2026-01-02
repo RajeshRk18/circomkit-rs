@@ -108,7 +108,7 @@ template Mux1() {
 pub const RANGE_CHECK_8: &str = r#"
 pragma circom 2.0.0;
 
-include "../node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/bitify.circom";
 
 template RangeCheck(n) {
     signal input in;
@@ -121,7 +121,7 @@ template RangeCheck(n) {
 pub const RANGE_CHECK_64: &str = r#"
 pragma circom 2.0.0;
 
-include "../node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/bitify.circom";
 
 template RangeCheck64() {
     signal input in;
@@ -134,7 +134,7 @@ template RangeCheck64() {
 pub const EDDSA_POSEIDON_VERIFIER: &str = r#"
 pragma circom 2.1.9;
 
-include "../node_modules/circomlib/circuits/eddsaposeidon.circom";
+include "circomlib/circuits/eddsaposeidon.circom";
 
 template EdDSAVerifier() {
     signal input enabled;

@@ -35,7 +35,8 @@ impl CircuitTester {
         let config = CircomkitConfig::new()
             .with_circuits_dir(TEST_CIRCUITS_DIR)
             .with_build_dir(TEST_BUILD_DIR)
-            .with_optimization(2); // Opt level 2
+            .with_optimization(2) // Opt level 2
+            .with_include("node_modules"); // Add node_modules for circomlib
 
         let circomkit = Circomkit::new(config).expect("Failed to create Circomkit");
 
