@@ -124,6 +124,9 @@ pub struct CircuitConfig {
     pub name: String,
     /// Path to the circuit file (relative to circuits directory)
     pub file: String,
+    /// Absolute path to circuit file (if set, takes precedence over `file`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub absolute_file: Option<PathBuf>,
     /// Template name within the circuit file
     pub template: String,
     /// Template parameters
@@ -141,16 +144,34 @@ impl CircuitConfig {
         Self {
             name: name.clone(),
             file: format!("{}.circom", name),
+            absolute_file: None,
             template: name,
             params: Vec::new(),
             public: Vec::new(),
         }
     }
 
-    /// Set the circuit file path
+    /// Set the circuit file path (relative to circuits directory)
     pub fn with_file(mut self, file: impl Into<String>) -> Self {
         self.file = file.into();
         self
+    }
+
+    /// Set an absolute path to the circuit file
+    /// When set, this takes precedence over the relative `file` path
+    pub fn with_absolute_file(mut self, path: impl Into<PathBuf>) -> Self {
+        self.absolute_file = Some(path.into());
+        self
+    }
+
+    /// Check if this config uses an absolute file path
+    pub fn has_absolute_file(&self) -> bool {
+        self.absolute_file.is_some()
+    }
+
+    /// Get the absolute file path if set
+    pub fn get_absolute_file(&self) -> Option<&PathBuf> {
+        self.absolute_file.as_ref()
     }
 
     /// Set the template name

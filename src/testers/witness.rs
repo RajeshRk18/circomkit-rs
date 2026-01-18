@@ -4,7 +4,7 @@ use crate::core::{Circomkit, CircomkitConfig};
 use crate::error::{CircomkitError, Result};
 use crate::types::{CircuitConfig, CircuitSignals, SignalValue, WitnessTestResult};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
 
@@ -16,9 +16,58 @@ pub struct WitnessTester {
 }
 
 impl WitnessTester {
-    /// Create a new witness tester for a circuit
-    pub async fn new(circuit: CircuitConfig) -> Result<Self> {
+    /// Create a new witness tester from a circuit template file
+    ///
+    /// # Arguments
+    /// * `test_name` - Name for this test instance (used for build artifacts)
+    /// * `file_path` - Path to the circuit file (can be absolute or relative)
+    /// * `template` - Template name to instantiate
+    /// * `params` - Template parameters
+    /// * `public` - Public signal names
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let tester = WitnessTester::new(
+    ///     "my_test",
+    ///     "./circuits/multiplier.circom",
+    ///     "Multiplier",
+    ///     vec![2],
+    ///     vec![],
+    /// ).await?;
+    /// ```
+    pub async fn new(
+        test_name: impl Into<String>,
+        file_path: impl Into<PathBuf>,
+        template: impl Into<String>,
+        params: Vec<i64>,
+        public: Vec<String>,
+    ) -> Result<Self> {
+        let test_name = test_name.into();
+        let file_path = file_path.into();
+        let template = template.into();
+
+        // Resolve to absolute path
+        let abs_path = if file_path.is_absolute() {
+            file_path
+        } else {
+            std::env::current_dir()
+                .map_err(CircomkitError::Io)?
+                .join(&file_path)
+        };
+
+        // Verify the file exists
+        if !abs_path.exists() {
+            return Err(CircomkitError::CircuitNotFound(abs_path));
+        }
+
         let config = CircomkitConfig::from_default_file()?;
+
+        let circuit = CircuitConfig::new(&test_name)
+            .with_absolute_file(abs_path)
+            .with_template(template)
+            .with_params(params)
+            .with_public(public);
+
         let circomkit = Circomkit::new(config)?;
 
         Ok(Self {
@@ -29,7 +78,63 @@ impl WitnessTester {
     }
 
     /// Create a new witness tester with custom configuration
-    pub async fn with_config(circuit: CircuitConfig, config: CircomkitConfig) -> Result<Self> {
+    pub async fn with_config(
+        test_name: impl Into<String>,
+        file_path: impl Into<PathBuf>,
+        template: impl Into<String>,
+        params: Vec<i64>,
+        public: Vec<String>,
+        config: CircomkitConfig,
+    ) -> Result<Self> {
+        let test_name = test_name.into();
+        let file_path = file_path.into();
+        let template = template.into();
+
+        // Resolve to absolute path
+        let abs_path = if file_path.is_absolute() {
+            file_path
+        } else {
+            std::env::current_dir()
+                .map_err(CircomkitError::Io)?
+                .join(&file_path)
+        };
+
+        if !abs_path.exists() {
+            return Err(CircomkitError::CircuitNotFound(abs_path));
+        }
+
+        let circuit = CircuitConfig::new(&test_name)
+            .with_absolute_file(abs_path)
+            .with_template(template)
+            .with_params(params)
+            .with_public(public);
+
+        let circomkit = Circomkit::new(config)?;
+
+        Ok(Self {
+            circomkit,
+            circuit,
+            compiled: false,
+        })
+    }
+
+    /// Create a witness tester from a pre-configured CircuitConfig
+    pub async fn from_circuit_config(circuit: CircuitConfig) -> Result<Self> {
+        let config = CircomkitConfig::from_default_file()?;
+        let circomkit = Circomkit::new(config)?;
+
+        Ok(Self {
+            circomkit,
+            circuit,
+            compiled: false,
+        })
+    }
+
+    /// Create a witness tester from CircuitConfig with custom Circomkit config
+    pub async fn from_circuit_config_with_settings(
+        circuit: CircuitConfig,
+        config: CircomkitConfig,
+    ) -> Result<Self> {
         let circomkit = Circomkit::new(config)?;
 
         Ok(Self {
@@ -221,15 +326,15 @@ impl WitnessTester {
     }
 }
 
-/// Macro for convenient witness testing
+/// Macro for convenient witness testing with file path
 #[macro_export]
 macro_rules! witness_test {
-    ($circuit:expr, $inputs:expr) => {{
-        let mut tester = WitnessTester::new($circuit).await?;
+    ($name:expr, $file:expr, $template:expr, $params:expr, $public:expr, $inputs:expr) => {{
+        let mut tester = WitnessTester::new($name, $file, $template, $params, $public).await?;
         tester.expect_pass($inputs).await
     }};
-    ($circuit:expr, $inputs:expr, $expected:expr) => {{
-        let mut tester = WitnessTester::new($circuit).await?;
+    ($name:expr, $file:expr, $template:expr, $params:expr, $public:expr, $inputs:expr, $expected:expr) => {{
+        let mut tester = WitnessTester::new($name, $file, $template, $params, $public).await?;
         tester.expect_output($inputs, $expected).await
     }};
 }

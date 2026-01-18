@@ -131,8 +131,13 @@ impl Circomkit {
     }
 
     /// Generate a main component file for the circuit
+    ///
+    /// The main component is generated in `build/main/` directory.
+    /// If the circuit has an absolute file path, it uses that directly.
+    /// Otherwise, it uses the relative path from the circuits directory.
     async fn generate_main_component(&self, circuit: &CircuitConfig) -> Result<PathBuf> {
-        let main_dir = self.config.dir_circuits.join("main");
+        // Put main components in build/main/ directory
+        let main_dir = self.config.dir_build.join("main");
         fs::create_dir_all(&main_dir).await?;
 
         let main_path = main_dir.join(format!("{}.circom", circuit.name));
@@ -154,15 +159,30 @@ impl Circomkit {
         } else {
             format!(" {{public [{}]}}", circuit.public.join(", "))
         };
+
+        // Determine the include path
+        let include_path = if let Some(abs_path) = &circuit.absolute_file {
+            // Use absolute path directly
+            abs_path.to_string_lossy().to_string()
+        } else {
+            // Use relative path from build/main to circuits directory
+            // build/main -> ../../circuits/file.circom
+            format!(
+                "../../{}/{}",
+                self.config.dir_circuits.display(),
+                circuit.file
+            )
+        };
+
         // circom 2.1.9
         let content = format!(
             r#"pragma circom 2.1.9;
 
-include "../{}";
+include "{}";
 
 component main{} = {}({});
 "#,
-            circuit.file, public_signals, circuit.template, params
+            include_path, public_signals, circuit.template, params
         );
 
         fs::write(&main_path, content).await?;

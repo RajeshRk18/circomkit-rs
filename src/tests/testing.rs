@@ -178,7 +178,7 @@ impl CircuitTester {
                 .with_build_dir(TEST_BUILD_DIR)
                 .with_optimization(1);
 
-            let mut tester = WitnessTester::with_config(circuit, config)
+            let mut tester = WitnessTester::from_circuit_config_with_settings(circuit, config)
                 .await
                 .map_err(|e| format!("Failed to create tester: {}", e))?;
 
