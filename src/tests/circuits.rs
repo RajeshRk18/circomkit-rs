@@ -108,7 +108,7 @@ template Mux1() {
 pub const RANGE_CHECK_8: &str = r#"
 pragma circom 2.0.0;
 
-include "../node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/bitify.circom";
 
 template RangeCheck(n) {
     signal input in;
@@ -121,11 +121,37 @@ template RangeCheck(n) {
 pub const RANGE_CHECK_64: &str = r#"
 pragma circom 2.0.0;
 
-include "../node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/bitify.circom";
 
 template RangeCheck64() {
     signal input in;
     component bits = Num2Bits(64);
     bits.in <== in;
+}
+"#;
+
+/// EdDSA Poseidon verifier circuit (wrapper for circomlib's EdDSAPoseidonVerifier)
+pub const EDDSA_POSEIDON_VERIFIER: &str = r#"
+pragma circom 2.1.9;
+
+include "circomlib/circuits/eddsaposeidon.circom";
+
+template EdDSAVerifier() {
+    signal input enabled;
+    signal input Ax;
+    signal input Ay;
+    signal input R8x;
+    signal input R8y;
+    signal input S;
+    signal input M;
+
+    component verifier = EdDSAPoseidonVerifier();
+    verifier.enabled <== enabled;
+    verifier.Ax <== Ax;
+    verifier.Ay <== Ay;
+    verifier.R8x <== R8x;
+    verifier.R8y <== R8y;
+    verifier.S <== S;
+    verifier.M <== M;
 }
 "#;

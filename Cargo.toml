@@ -43,6 +43,11 @@ directories = "5.0"
 sha2 = "0.10"
 hex = "0.4"
 
+# EdDSA BabyJubJub for testing circomlib circuits
+babyjubjub-rs = "0.0.11"
+num-bigint = "0.4"
+ff_ce = "0.11"
+
 [dev-dependencies]
 tokio-test = "0.4"
 pretty_assertions = "1.4"
